@@ -2,7 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>HINT TERMINAL — 방탈출 힌트 시스템</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -24,22 +27,30 @@
     --font-mono: 'Share Tech Mono', monospace;
     --font-display: 'Orbitron', sans-serif;
     --font-kr: 'Noto Sans KR', sans-serif;
+    --statusbar-h: 36px;
   }
 
-  html, body {
+  html {
     height: 100%;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  body {
+    min-height: 100%;
     background: var(--c-bg);
     color: var(--c-text);
     font-family: var(--font-mono);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    -webkit-text-size-adjust: 100%;
   }
 
   /* Star field */
   .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   .star {
-    position: absolute;
-    border-radius: 50%;
-    background: white;
+    position: absolute; border-radius: 50%; background: white;
     animation: twinkle var(--d, 3s) ease-in-out infinite;
     opacity: var(--o, 0.4);
   }
@@ -59,19 +70,20 @@
 
   /* Status bar */
   .statusbar {
-    position: fixed; top: 0; left: 0; right: 0;
-    height: 36px; background: var(--c-panel);
+    position: fixed; top: env(safe-area-inset-top); left: 0; right: 0;
+    height: var(--statusbar-h); background: var(--c-panel);
     border-bottom: 1px solid var(--c-border);
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 1.5rem; font-size: 10px; letter-spacing: 0.15em;
-    color: var(--c-dim); z-index: 10;
+    padding: 0 1rem; font-size: 9px; letter-spacing: 0.12em;
+    color: var(--c-dim); z-index: 100;
   }
   .statusbar .blink { color: var(--c-accent); animation: blink 1.2s step-end infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
   .status-dot {
     display: inline-block; width: 6px; height: 6px;
     border-radius: 50%; background: var(--c-success);
-    margin-right: 6px; animation: pulse 2s ease-in-out infinite;
+    margin-right: 5px; flex-shrink: 0;
+    animation: pulse 2s ease-in-out infinite;
   }
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
@@ -80,15 +92,16 @@
 
   /* Main layout */
   .shell {
-    position: relative; z-index: 2; height: 100vh;
+    position: relative; z-index: 2;
+    min-height: 100vh;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: 2rem;
+    padding: calc(var(--statusbar-h) + env(safe-area-inset-top) + 1.25rem) 1rem calc(3rem + env(safe-area-inset-bottom));
   }
 
   /* Terminal window */
   .terminal {
-    width: 100%; max-width: 580px;
+    width: 100%; max-width: 560px;
     background: var(--c-panel);
     border: 1px solid var(--c-glow);
     border-radius: 4px; overflow: hidden; position: relative;
@@ -102,49 +115,47 @@
   /* Terminal title bar */
   .terminal-bar {
     background: var(--c-deep); border-bottom: 1px solid var(--c-border);
-    padding: 8px 1rem; display: flex; align-items: center; gap: 8px;
-    font-size: 10px; letter-spacing: 0.12em; color: var(--c-dim);
+    padding: 8px 0.875rem; display: flex; align-items: center; gap: 6px;
+    font-size: 9px; letter-spacing: 0.1em; color: var(--c-dim);
   }
-  .tbar-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-border); }
+  .tbar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-border); flex-shrink: 0; }
   .tbar-title {
     flex: 1; text-align: center; font-family: var(--font-display);
-    font-size: 9px; letter-spacing: 0.25em; color: var(--c-accent);
+    font-size: 8px; letter-spacing: 0.18em; color: var(--c-accent);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   /* Terminal body */
-  .terminal-body { padding: 1.75rem 2rem 1.5rem; }
+  .terminal-body { padding: 1.5rem 1.25rem 1.25rem; }
 
   /* Header */
   .main-title {
     font-family: var(--font-display); font-weight: 900;
-    font-size: clamp(16px, 3.5vw, 24px); letter-spacing: 0.2em;
+    font-size: clamp(20px, 6vw, 26px); letter-spacing: 0.2em;
     color: #ffffff; text-align: center; margin-bottom: 4px; line-height: 1.2;
   }
   .sub-title {
-    font-family: var(--font-kr); font-weight: 300; font-size: 11px;
-    letter-spacing: 0.2em; color: var(--c-dim);
-    text-align: center; margin-bottom: 1.5rem;
+    font-family: var(--font-kr); font-weight: 300;
+    font-size: clamp(10px, 2.5vw, 12px); letter-spacing: 0.15em;
+    color: var(--c-dim); text-align: center; margin-bottom: 1.25rem;
   }
 
   /* Divider */
-  .divider { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; }
+  .divider { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem; }
   .divider-line { flex: 1; height: 1px; background: var(--c-border); }
   .divider-icon {
-    width: 20px; height: 20px; border: 1px solid var(--c-glow);
+    width: 18px; height: 18px; border: 1px solid var(--c-glow);
     transform: rotate(45deg); display: flex; align-items: center;
     justify-content: center; flex-shrink: 0;
   }
-  .divider-icon::after {
-    content: ''; width: 6px; height: 6px;
-    background: var(--c-accent); transform: rotate(0deg);
-  }
+  .divider-icon::after { content: ''; width: 5px; height: 5px; background: var(--c-accent); }
 
   /* Log area */
   .log-area {
     background: var(--c-bg); border: 1px solid var(--c-border); border-radius: 2px;
-    padding: 0.75rem 1rem; margin-bottom: 1.25rem; min-height: 56px;
-    font-size: 11px; line-height: 1.8; color: var(--c-dim); font-family: var(--font-mono);
-    overflow: hidden;
+    padding: 0.625rem 0.875rem; margin-bottom: 1rem; min-height: 52px;
+    font-size: clamp(10px, 2.5vw, 11px); line-height: 1.75;
+    color: var(--c-dim); font-family: var(--font-mono); overflow: hidden;
   }
   .log-area .log-line { display: block; opacity: 0; animation: fadeIn 0.3s forwards; }
   .log-area .log-line.success { color: var(--c-success); }
@@ -155,44 +166,12 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Input field */
-  .input-row { display: flex; gap: 10px; align-items: stretch; margin-bottom: 1rem; }
-  .input-prefix {
-    display: flex; align-items: center; color: var(--c-accent);
-    font-size: 13px; white-space: nowrap; flex-shrink: 0; user-select: none;
-  }
-  .code-input {
-    flex: 1; background: var(--c-bg); border: 1px solid var(--c-glow);
-    border-radius: 2px; padding: 10px 14px; color: white;
-    font-family: var(--font-display); font-size: 16px;
-    letter-spacing: 0.3em; text-transform: uppercase; outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .code-input::placeholder {
-    color: var(--c-dim); font-size: 11px; letter-spacing: 0.15em; font-family: var(--font-mono);
-  }
-  .code-input:focus { border-color: var(--c-accent); }
-
-  /* Submit button */
-  .submit-btn {
-    width: 100%; background: transparent; border: 1px solid var(--c-glow);
-    color: var(--c-accent); font-family: var(--font-display); font-size: 11px;
-    font-weight: 700; letter-spacing: 0.3em; padding: 12px; cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-    text-transform: uppercase; border-radius: 2px; margin-bottom: 1.25rem;
-  }
-  .submit-btn:hover { background: var(--c-accent2); border-color: var(--c-accent); color: white; }
-  .submit-btn:active { transform: scale(0.99); }
-
   /* Hint display box */
   .hint-box {
     background: rgba(42, 255, 179, 0.04);
-    border: 1px solid var(--c-success);
-    border-radius: 2px;
-    padding: 1.25rem 1.25rem;
-    margin-bottom: 1rem;
-    display: none;
-    animation: hintReveal 0.5s ease-out forwards;
+    border: 1px solid var(--c-success); border-radius: 2px;
+    padding: 1rem; margin-bottom: 1rem;
+    display: none; animation: hintReveal 0.5s ease-out forwards;
   }
   .hint-box.show { display: block; }
   @keyframes hintReveal {
@@ -200,69 +179,133 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .hint-label {
-    font-family: var(--font-display); font-size: 9px;
-    letter-spacing: 0.3em; color: var(--c-success);
-    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-display); font-size: 8px;
+    letter-spacing: 0.25em; color: var(--c-success);
+    margin-bottom: 8px; display: flex; align-items: center; gap: 7px;
   }
   .hint-label::before {
     content: ''; display: inline-block; width: 6px; height: 6px;
-    background: var(--c-success); border-radius: 50%;
+    background: var(--c-success); border-radius: 50%; flex-shrink: 0;
     animation: pulse 1.5s ease-in-out infinite;
   }
   .hint-code-tag {
-    font-family: var(--font-mono); font-size: 10px;
-    color: var(--c-dim); letter-spacing: 0.2em; margin-left: auto;
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--c-dim); letter-spacing: 0.15em; margin-left: auto;
   }
   .hint-text {
-    font-family: var(--font-kr); font-size: 14px; font-weight: 400;
-    color: #c8f0e8; line-height: 1.9; letter-spacing: 0.05em;
-    word-break: keep-all;
+    font-family: var(--font-kr);
+    font-size: clamp(13px, 3.5vw, 15px);
+    font-weight: 400; color: #c8f0e8;
+    line-height: 1.9; letter-spacing: 0.03em; word-break: keep-all;
   }
+
+  /* Input field */
+  .input-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 0.875rem; }
+  .input-prefix {
+    display: flex; align-items: center; color: var(--c-accent);
+    font-size: clamp(10px, 2.5vw, 12px);
+    white-space: nowrap; flex-shrink: 0; user-select: none;
+  }
+  .code-input {
+    flex: 1; min-width: 0;
+    background: var(--c-bg); border: 1px solid var(--c-glow);
+    border-radius: 2px; padding: 12px 10px; color: white;
+    font-family: var(--font-display);
+    font-size: clamp(15px, 4vw, 18px);
+    letter-spacing: 0.25em; text-transform: uppercase; outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .code-input::placeholder {
+    color: var(--c-dim); font-size: 10px; letter-spacing: 0.1em; font-family: var(--font-mono);
+  }
+  .code-input:focus { border-color: var(--c-accent); }
+
+  /* Submit button */
+  .submit-btn {
+    width: 100%; background: transparent; border: 1px solid var(--c-glow);
+    color: var(--c-accent); font-family: var(--font-display);
+    font-size: clamp(10px, 2.5vw, 11px);
+    font-weight: 700; letter-spacing: 0.25em; padding: 15px 12px;
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    text-transform: uppercase; border-radius: 2px; margin-bottom: 1rem;
+    -webkit-appearance: none; appearance: none; touch-action: manipulation;
+  }
+  .submit-btn:hover { background: var(--c-accent2); border-color: var(--c-accent); color: white; }
+  .submit-btn:active { transform: scale(0.98); background: var(--c-accent2); color: white; }
 
   /* Footer */
   .footer-info {
-    display: flex; justify-content: space-between; padding-top: 1rem;
-    border-top: 1px solid var(--c-border); font-size: 9px;
-    letter-spacing: 0.12em; color: var(--c-dim);
+    display: flex; justify-content: space-between; padding-top: 0.875rem;
+    border-top: 1px solid var(--c-border);
+    font-size: clamp(8px, 2vw, 9px); letter-spacing: 0.1em;
+    color: var(--c-dim); flex-wrap: wrap; gap: 4px;
   }
 
-  /* Shake animation */
+  /* Animations */
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    15% { transform: translateX(-6px); }
-    30% { transform: translateX(6px); }
-    45% { transform: translateX(-4px); }
-    60% { transform: translateX(4px); }
-    75% { transform: translateX(-2px); }
-    90% { transform: translateX(2px); }
+    15% { transform: translateX(-5px); }
+    30% { transform: translateX(5px); }
+    45% { transform: translateX(-3px); }
+    60% { transform: translateX(3px); }
+    80% { transform: translateX(-2px); }
   }
-  .shake { animation: shake 0.45s ease-out; }
+  .shake { animation: shake 0.4s ease-out; }
 
-  /* Flash animations */
   @keyframes successFlash {
     0% { border-color: var(--c-glow); }
-    30% { border-color: var(--c-success); box-shadow: 0 0 20px rgba(42,255,179,0.2); }
+    30% { border-color: var(--c-success); box-shadow: 0 0 16px rgba(42,255,179,0.2); }
     100% { border-color: var(--c-glow); }
   }
   .success-flash { animation: successFlash 1.2s ease-out; }
 
   @keyframes dangerFlash {
     0% { border-color: var(--c-glow); }
-    30% { border-color: var(--c-danger); box-shadow: 0 0 20px rgba(255,58,92,0.2); }
+    30% { border-color: var(--c-danger); box-shadow: 0 0 16px rgba(255,58,92,0.2); }
     100% { border-color: var(--c-glow); }
   }
   .danger-flash { animation: dangerFlash 0.8s ease-out; }
 
   /* Coordinate display */
   .coord-display {
-    position: fixed; bottom: 1.5rem; right: 1.5rem;
-    font-size: 9px; letter-spacing: 0.1em; color: var(--c-border);
-    text-align: right; line-height: 1.8; z-index: 10;
+    position: fixed;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    right: 1rem;
+    font-size: 8px; letter-spacing: 0.08em; color: var(--c-border);
+    text-align: right; line-height: 1.7; z-index: 10;
   }
 
   /* Typewriter cursor */
   .typing::after {
     content: '█'; color: var(--c-success); animation: blink 0.8s step-end infinite;
+  }
+
+  /* ── 소형 폰 (≤480px) ── */
+  @media (max-width: 480px) {
+    .shell {
+      justify-content: flex-start;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    .terminal-body { padding: 1.25rem 1rem 1rem; }
+  }
+
+  /* ── 매우 작은 세로 (SE 등) ── */
+  @media (max-height: 650px) {
+    .main-title { font-size: 18px; }
+    .sub-title  { margin-bottom: 0.75rem; }
+    .divider    { margin-bottom: 0.75rem; }
+    .log-area   { min-height: 40px; }
+  }
+
+  /* ── 가로 모드 ── */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .shell { justify-content: flex-start; }
+    .main-title { font-size: 16px; margin-bottom: 2px; }
+    .sub-title  { margin-bottom: 0.625rem; }
+    .divider    { margin-bottom: 0.625rem; }
+    .log-area   { min-height: 36px; margin-bottom: 0.625rem; }
   }
 </style>
 </head>
@@ -283,7 +326,7 @@
       <div class="tbar-dot"></div>
       <div class="tbar-dot"></div>
       <div class="tbar-dot"></div>
-      <div class="tbar-title"></div>
+      <div class="tbar-title">ESCAPE ROOM — HINT TERMINAL v1.0</div>
     </div>
     <div class="terminal-body">
 
@@ -301,7 +344,6 @@
         <span class="log-line info" id="initLog2">&gt; AWAITING HINT CODE INPUT...</span>
       </div>
 
-      <!-- Hint result box -->
       <div class="hint-box" id="hintBox">
         <div class="hint-label">
           HINT UNLOCKED
@@ -311,14 +353,17 @@
       </div>
 
       <div class="input-row">
-        <div class="input-prefix">HINT_CODE://</div>
+        <div class="input-prefix">HINT://</div>
         <input
           class="code-input"
           id="codeInput"
           type="text"
-          placeholder="enter hint code"
+          inputmode="text"
+          placeholder="enter code"
           maxlength="24"
           autocomplete="off"
+          autocorrect="off"
+          autocapitalize="characters"
           spellcheck="false"
         />
       </div>
@@ -336,32 +381,28 @@
   </div>
 </div>
 
-<div class="coord-display" id="coords">
+<div class="coord-display">
   <div>ROOM STATUS: ACTIVE</div>
   <div id="sessionTime">SESSION: 00:00</div>
 </div>
 
 <script>
-  // ─── 힌트 데이터 (CSV 파일 내용을 여기에 넣거나, 아래처럼 직접 정의)
-  //     실제 운영 시: fetch('hints.csv')로 외부 CSV를 불러올 수 있습니다.
-  // ──────────────────────────────────────────────────────────────────────
+  // ─── 힌트 데이터 ──────────────────────────────────────────────────────
   const CSV_DATA = `힌트코드,힌트
-    XQBF,첫번째 힌트
-    R7M2,두번째 힌트
-    K4NP,세번째 힌트
-    9WZT,네번째 힌트
-    L3VJ,다섯번째 힌트
-    H8DY,여섯번째 힌트
-    2CRG,일곱번째 힌트
-    A6KS,여덟번째 힌트
-    7FPW,아홉번째 힌트
-    NE5Q,열번째 힌트`;
+XQBF,첫번째 힌트
+R7M2,두번째 힌트
+K4NP,세번째 힌트
+9WZT,네번째 힌트
+L3VJ,다섯번째 힌트
+H8DY,여섯번째 힌트
+2CRG,일곱번째 힌트
+A6KS,여덟번째 힌트
+7FPW,아홉번째 힌트
+NE5Q,열번째 힌트`;
 
-  // CSV 파싱
   function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const map = {};
-    // 첫 줄은 헤더이므로 1번부터 시작
     for (let i = 1; i < lines.length; i++) {
       const commaIdx = lines[i].indexOf(',');
       if (commaIdx === -1) continue;
@@ -373,12 +414,6 @@
   }
 
   const HINTS = parseCSV(CSV_DATA);
-
-  // ─── 외부 CSV 파일을 쓰려면 위 CSV_DATA 대신 아래 코드를 사용하세요 ───
-  // let HINTS = {};
-  // fetch('hints.csv')
-  //   .then(r => r.text())
-  //   .then(text => { HINTS = parseCSV(text); });
   // ─────────────────────────────────────────────────────────────────────
 
   let retrievedCount = 0;
@@ -386,33 +421,22 @@
 
   // Star field
   const starfield = document.getElementById('starfield');
-  for (let i = 0; i < 160; i++) {
+  for (let i = 0; i < 120; i++) {
     const s = document.createElement('div');
     s.className = 'star';
     const size = Math.random() < 0.15 ? 2 : 1;
-    s.style.cssText = `
-      width:${size}px; height:${size}px;
-      top:${Math.random()*100}%;
-      left:${Math.random()*100}%;
-      --o:${0.2 + Math.random()*0.6};
-      --d:${2 + Math.random()*5}s;
-      animation-delay:${Math.random()*5}s;
-    `;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--o:${0.2+Math.random()*0.6};--d:${2+Math.random()*5}s;animation-delay:${Math.random()*5}s;`;
     starfield.appendChild(s);
   }
 
-  // Clock
+  // Clock + session timer
   function updateClock() {
     const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    const s = String(now.getSeconds()).padStart(2,'0');
-    document.getElementById('clock').textContent = `${h}:${m}:${s}`;
-
-    const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
-    const em = String(Math.floor(elapsed / 60)).padStart(2,'0');
-    const es = String(elapsed % 60).padStart(2,'0');
-    document.getElementById('sessionTime').textContent = `SESSION: ${em}:${es}`;
+    document.getElementById('clock').textContent =
+      `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    const e = Math.floor((Date.now() - sessionStart) / 1000);
+    document.getElementById('sessionTime').textContent =
+      `SESSION: ${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
   }
   setInterval(updateClock, 1000);
   updateClock();
@@ -426,7 +450,6 @@
     line.textContent = msg;
     area.appendChild(line);
     while (area.children.length > 5) area.removeChild(area.firstChild);
-    area.scrollTop = area.scrollHeight;
   }
 
   // Web Audio tones
@@ -438,14 +461,14 @@
     try {
       const c = ensureCtx();
       [440, 554, 659].forEach((freq, i) => {
-        const osc = c.createOscillator(), gain = c.createGain();
-        osc.connect(gain); gain.connect(c.destination);
+        const osc = c.createOscillator(), g = c.createGain();
+        osc.connect(g); g.connect(c.destination);
         osc.frequency.value = freq; osc.type = 'sine';
         const t = c.currentTime + i * 0.1;
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-        osc.start(t); osc.stop(t + 0.45);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.15, t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t+0.4);
+        osc.start(t); osc.stop(t+0.45);
       });
     } catch(e) {}
   }
@@ -453,80 +476,64 @@
   function playFailTone() {
     try {
       const c = ensureCtx();
-      [[200, 0], [170, 0.15]].forEach(([freq, delay]) => {
-        const osc = c.createOscillator(), gain = c.createGain();
-        osc.connect(gain); gain.connect(c.destination);
+      [[200,0],[170,0.15]].forEach(([freq,delay]) => {
+        const osc = c.createOscillator(), g = c.createGain();
+        osc.connect(g); g.connect(c.destination);
         osc.frequency.value = freq; osc.type = 'sawtooth';
         const t = c.currentTime + delay;
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.12, t + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-        osc.start(t); osc.stop(t + 0.3);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.12, t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t+0.25);
+        osc.start(t); osc.stop(t+0.3);
       });
     } catch(e) {}
   }
 
-  // Typewriter effect for hint text
+  // Typewriter
   function typewriterText(el, text, speed = 30) {
-    el.textContent = '';
-    el.classList.add('typing');
+    el.textContent = ''; el.classList.add('typing');
     let i = 0;
     const timer = setInterval(() => {
-      el.textContent += text[i];
-      i++;
-      if (i >= text.length) {
-        clearInterval(timer);
-        el.classList.remove('typing');
-      }
+      el.textContent += text[i++];
+      if (i >= text.length) { clearInterval(timer); el.classList.remove('typing'); }
     }, speed);
   }
 
-  // Submit handler
+  // Submit
   function handleSubmit() {
     const input = document.getElementById('codeInput');
     const terminal = document.getElementById('terminal');
     const val = input.value.trim().toUpperCase();
-
     if (!val) return;
 
     const hint = HINTS[val];
 
     if (hint) {
-      // ─── HIT ───
       terminal.classList.add('success-flash');
       setTimeout(() => terminal.classList.remove('success-flash'), 1200);
       playSuccessTone();
-
       addLog(`> HINT CODE ACCEPTED: ${val}`, 'success');
       addLog(`> DECRYPTING HINT DATA...`, 'info');
 
-      // 힌트 박스 표시
       const hintBox = document.getElementById('hintBox');
       const hintText = document.getElementById('hintText');
-      const hintCodeTag = document.getElementById('hintCodeTag');
-
-      hintCodeTag.textContent = `[${val}]`;
+      document.getElementById('hintCodeTag').textContent = `[${val}]`;
       hintBox.classList.remove('show');
 
-      // 살짝 딜레이 후 타이프라이터로 표시
       setTimeout(() => {
         hintBox.classList.add('show');
         typewriterText(hintText, hint, 28);
+        // 힌트 박스가 보이도록 스크롤
+        hintBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 300);
 
       retrievedCount++;
       document.getElementById('hintCount').textContent = `HINTS RETRIEVED: ${retrievedCount}`;
 
     } else {
-      // ─── MISS ───
-      terminal.classList.add('shake');
-      terminal.classList.add('danger-flash');
-      setTimeout(() => {
-        terminal.classList.remove('shake');
-        terminal.classList.remove('danger-flash');
-      }, 600);
+      terminal.classList.add('shake', 'danger-flash');
+      setTimeout(() => terminal.classList.remove('shake', 'danger-flash'), 600);
       playFailTone();
-
       addLog(`> UNKNOWN CODE: "${val}"`, 'danger');
       addLog(`> HINT NOT FOUND — CHECK CODE AND RETRY`, 'danger');
     }
@@ -537,12 +544,19 @@
 
   // Enter key
   document.getElementById('codeInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleSubmit();
+    if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
   });
 
-  // Focus on load
+  // 데스크탑만 자동 포커스
   window.addEventListener('load', () => {
-    document.getElementById('codeInput').focus();
+    if (window.innerWidth > 768) document.getElementById('codeInput').focus();
+  });
+
+  // iOS 키보드 올라올 때 터미널 스크롤 조정
+  document.getElementById('codeInput').addEventListener('focus', () => {
+    setTimeout(() => {
+      document.getElementById('terminal').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 350);
   });
 </script>
 </body>
